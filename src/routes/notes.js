@@ -3,12 +3,20 @@ const router = express.Router();
 
 let notes = []; // temporary in-memory store
 
-router.get('/', (req, res) => res.json(notes));
+const pool = require('../db');
 
-router.post('/', (req, res) => {
-  const note = { id: Date.now(), text: req.body.text };
-  notes.push(note);
-  res.status(201).json(note);
+router.get('/', async (req, res) => {
+  const result = await pool.query('SELECT * FROM notes');
+  res.json(result.rows);
+});
+
+router.post('/', async (req, res) => {
+  const { text } = req.body;
+  const result = await pool.query(
+    'INSERT INTO notes (text) VALUES ($1) RETURNING *',
+    [text]
+  );
+  res.status(201).json(result.rows[0]);
 });
 
 router.put('/:id', (req, res) => {
